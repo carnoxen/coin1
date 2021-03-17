@@ -8,12 +8,17 @@ use std::time::Instant;
 struct NC(u32, u32);
 
 fn escapetonc(reader: &mut BufReader<&TcpStream>, regex: &Regex, line: &mut String) {
+    let now = Instant::now();
+
     loop {
         line.clear();
         reader.read_line(line).unwrap();
         print!("{}", &line);
         if regex.is_match(&line) {
             break;
+        }
+        if now.elapsed().as_secs() >= 30u64 {
+            panic!("coin1 game ended");
         }
     }
 }
