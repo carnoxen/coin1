@@ -50,13 +50,12 @@ fn main() -> std::io::Result<()> {
         let (mut start, mut end) = (0u32, n - 1u32);
         for _ in 0u32..c {
             let mid = (end + start) / 2u32;
-            let mut sending_string = String::new();
 
             let stringvector: Vec<String> = (start..(mid + 1u32)).map(|u| u.to_string()).collect();
-            sending_string.push_str(&stringvector.join(" "));
+            let mut sending_string = stringvector.join(" ");
             sending_string.push('\n');
 
-            writer.write(&sending_string.as_bytes())?;
+            writer.write(sending_string.as_bytes())?;
             writer.flush()?;
 
             line.clear();
