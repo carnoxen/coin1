@@ -1,59 +1,47 @@
 use regex::Regex;
-use std::io::prelude::*;
+use ssh2::Channel;
 use std::net::TcpStream;
 use std::io::BufReader;
 use std::io::BufWriter;
-use std::time::Instant;
+use std::io::prelude::*;
 
-struct NC(u32, u32);
-
-fn escapetonc(reader: &mut BufReader<&TcpStream>, regex: &Regex, line: &mut String) {
-    let now = Instant::now();
-
-    loop {
+fn findnc(line: &mut String, reader: &mut BufReader<Channel>) -> anyhow::Result<(i32, i32)> {
+    let regex = Regex::new(r"^N=(\d+) C=(\d+)")?;
+    while !regex.is_match(&line) {
         line.clear();
-        reader.read_line(line).unwrap();
-        print!("{}", &line);
-        if regex.is_match(&line) {
-            break;
-        }
-        if now.elapsed().as_secs() >= 30u64 {
-            panic!("coin1 game ended");
-        }
+        reader.read_line(line)?;
+        print!("{line}");
     }
+
+    let (_, [n, c]) = regex.captures(&line).map(|c| c.extract()).expect("unmatch");
+
+    Ok((n.parse::<i32>()?, c.parse::<i32>()?))
 }
 
-fn findnc(s: &String, r: &Regex) -> NC {
-    let caps = r.captures(&s).unwrap();
+fn main() -> anyhow::Result<()> {
+    use ssh2::Session;
 
-    let n = caps.name("n").unwrap().as_str().parse::<u32>().unwrap();
-    let c = caps.name("c").unwrap().as_str().parse::<u32>().unwrap();
-    NC(n, c)
-}
+    let tcp = TcpStream::connect("pwnable.kr:2222")?;
+    let mut sess = Session::new()?;
+    sess.set_tcp_stream(tcp);
+    sess.handshake()?;
+    sess.userauth_password("coin1", "guest")?;
+    assert!(sess.authenticated());
 
-fn main() -> std::io::Result<()> {
-    let stream = TcpStream::connect("pwnable.kr:9007")?;
-    let mut reader = BufReader::new(&stream);
-    let mut writer = BufWriter::new(&stream);
-
-    let regex = Regex::new(r"^N=(?P<n>\d+) C=(?P<c>\d+)").unwrap();
-    let regex2 = Regex::new(r"^(\d+)").unwrap();
-
-    let mut times = 110;
+    let channel = sess.channel_direct_tcpip("127.0.0.1", 9007, None)?;
+    let mut writer = BufWriter::new(channel.clone());
+    let mut reader = BufReader::new(channel);
     let mut line = String::new();
-    while times > 0 {
-        escapetonc(&mut reader, &regex, &mut line);
-        let nc = findnc(&line, &regex);
-        let n = nc.0;
-        let c = nc.1;
 
-        let (mut start, mut end) = (0u32, n - 1u32);
-        for _ in 0u32..c {
-            let mid = (end + start) / 2u32;
+    for _ in 0..100 {
+        let nc = findnc(&mut line, &mut reader)?;
+        let (mut start, mut end) = (0, nc.0 - 1);
 
-            let stringvector: Vec<String> = (start..(mid + 1u32)).map(|u| u.to_string()).collect();
-            let mut sending_string = stringvector.join(" ");
-            sending_string.push('\n');
+        for _ in 0..nc.1 {
+            let mid = (end + start) / 2;
+
+            let stringvector: Vec<String> = (start..(mid + 1)).map(|u| u.to_string()).collect();
+            let sending_string = stringvector.join(" ") + "\n";
 
             writer.write(sending_string.as_bytes())?;
             writer.flush()?;
@@ -61,18 +49,28 @@ fn main() -> std::io::Result<()> {
             line.clear();
             reader.read_line(&mut line)?;
 
-            let total_value = regex2.captures(&line).unwrap().get(1).unwrap().as_str().trim().parse::<u32>().unwrap();
-            if total_value % 10u32 == 9u32 {
+            let regex2 = Regex::new(r"^(\d+)")?;
+            let (_, [total_value]) = regex2.captures(&line).map(|c| c.extract()).expect("unmatched");
+            if total_value.parse::<i32>()? % 10 == 9 {
                 end = mid;
             } else {
-                start = mid + 1u32;
+                start = mid + 1;
             }
         }
 
-        writer.write(format!{"{}\n", start.to_string()}.as_bytes())?;
+        writer.write(format!{"{start}\n"}.as_bytes())?;
         writer.flush()?;
-
-        times = times - 1;
     }
+
+    line.clear();
+    while let Ok(num) = reader.read_line(&mut line) {
+        print!("{line}");
+        line.clear();
+
+        if num == 0 {
+            break;
+        }
+    }
+
     Ok(())
-} // the stream is closed here
+}
