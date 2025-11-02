@@ -2,7 +2,6 @@ use regex::Regex;
 use ssh2::Session;
 use std::net::TcpStream;
 use std::io::{ BufReader, BufWriter, prelude::* };
-use std::time::Duration;
 
 struct ChannelContext {
     writer: BufWriter<Box<dyn Write>>,
@@ -12,6 +11,7 @@ struct ChannelContext {
 impl ChannelContext {
     #[cfg(test)]
     pub fn direct_channel() -> anyhow::Result<ChannelContext> {
+        use std::time::Duration;
         let tcp = TcpStream::connect("pwnable.kr:9007")?;
         tcp.set_read_timeout(Some(Duration::from_secs(60)))?;
         let writer_box = Box::new(tcp.try_clone()?);
