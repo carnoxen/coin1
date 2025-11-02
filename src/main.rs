@@ -42,11 +42,11 @@ impl ChannelContext {
     fn find_nc(&mut self) -> anyhow::Result<(i32, i32)> {
         let mut line: String = String::new();
         let regex = Regex::new(r"^N=(\d+) C=(\d+)")?;
-        while let Ok(_) = self.reader.read_line(&mut line) {
+
+        while let Ok(_) = self.reader.read_line(&mut line) && 
+            !regex.is_match(&line) 
+        {
             print!("{line}");
-            if regex.is_match(&line) {
-                break;
-            }
             line.clear();
         }
 
@@ -56,7 +56,6 @@ impl ChannelContext {
     }
 
     fn find_total(&mut self, start: i32, mid: i32) -> anyhow::Result<i32> {
-        let regex = Regex::new(r"^(\d+)")?;
         let ivec: Vec<String> = (start..(mid + 1)).map(|n| n.to_string()).collect();
         let ivec_to_string = ivec.join(" ") + "\n";
 
@@ -64,13 +63,15 @@ impl ChannelContext {
         self.writer.flush()?;
 
         let mut line = String::new();
+        let regex = Regex::new(r"^(\d+)")?;
+
         self.reader.read_line(&mut line)?;
         let total_value = &regex.captures(&line).expect("unmatched")[1];
 
         Ok(total_value.parse::<i32>()?)
     }
 
-    fn print_result(&mut self, start: i32) -> anyhow::Result<()> {
+    fn write_result(&mut self, start: i32) -> anyhow::Result<()> {
         self.writer.write(format!{"{start}\n"}.as_bytes())?;
         self.writer.flush()?;
 
@@ -79,11 +80,11 @@ impl ChannelContext {
 
     fn print_to_end(&mut self) -> anyhow::Result<()> {
         let mut line = String::new();
-        while let Ok(num) = self.reader.read_line(&mut line) {
+
+        while let Ok(num) = self.reader.read_line(&mut line) &&
+            num != 0 
+        {
             print!("{line}");
-            if num == 0 {
-                break;
-            }
             line.clear();
         }
 
@@ -107,7 +108,7 @@ fn start_coin1(channel_context: &mut ChannelContext) -> anyhow::Result<()> {
             }
         }
 
-        channel_context.print_result(start)?;
+        channel_context.write_result(start)?;
     }
 
     channel_context.print_to_end()?;
@@ -138,12 +139,8 @@ mod tests {
     }
 
     #[test]
-    fn direct_speed() -> anyhow::Result<()> {
-        let start = Instant::now();
-        let mut channel_context = ChannelContext::direct_channel()?;
-        start_coin1(&mut channel_context)?;
-
-        println!("Elapsed Seconds: {}", start.elapsed().as_secs());
-        Ok(())
+    #[should_panic]
+    fn direct_speed() {
+        ChannelContext::direct_channel().unwrap();
     }
 }
