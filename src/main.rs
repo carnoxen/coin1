@@ -18,7 +18,7 @@ fn findnc(line: &mut String, reader: &mut BufReader<Channel>) -> anyhow::Result<
     Ok((n.parse::<i32>()?, c.parse::<i32>()?))
 }
 
-fn main() -> anyhow::Result<()> {
+fn tunneled_channel() -> anyhow::Result<Channel> {
     use ssh2::Session;
 
     let tcp = TcpStream::connect("pwnable.kr:2222")?;
@@ -26,9 +26,12 @@ fn main() -> anyhow::Result<()> {
     sess.set_tcp_stream(tcp);
     sess.handshake()?;
     sess.userauth_password("coin1", "guest")?;
-    assert!(sess.authenticated());
 
-    let channel = sess.channel_direct_tcpip("127.0.0.1", 9007, None)?;
+    Ok(sess.channel_direct_tcpip("127.0.0.1", 9007, None)?)
+}
+
+fn main() -> anyhow::Result<()> {
+    let channel = tunneled_channel()?;
     let mut writer = BufWriter::new(channel.clone());
     let mut reader = BufReader::new(channel);
     let mut line = String::new();
