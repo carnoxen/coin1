@@ -10,32 +10,28 @@ struct ChannelContext {
 
 impl ChannelContext {
     #[cfg(test)]
-    pub fn direct_channel() -> anyhow::Result<ChannelContext> {
+    pub fn direct_channel(sec: u64) -> anyhow::Result<Self> {
         use std::time::Duration;
         let tcp = TcpStream::connect("pwnable.kr:9007")?;
-        tcp.set_read_timeout(Some(Duration::from_secs(60)))?;
-        let writer_box = Box::new(tcp.try_clone()?);
-        let reader_box = Box::new(tcp);
+        tcp.set_read_timeout(Some(Duration::from_secs(sec)))?;
 
-        Ok(ChannelContext {
-            writer: BufWriter::new(writer_box),
-            reader: BufReader::new(reader_box)
+        Ok(Self {
+            writer: BufWriter::new(Box::new(tcp.try_clone()?)),
+            reader: BufReader::new(Box::new(tcp))
         })
     }
 
-    pub fn tunneled_channel() -> anyhow::Result<ChannelContext> {
+    pub fn tunneled_channel() -> anyhow::Result<Self> {
         let mut sess = Session::new()?;
         let tcp = TcpStream::connect("pwnable.kr:2222")?;
         sess.set_tcp_stream(tcp);
         sess.handshake()?;
         sess.userauth_password("coin1", "guest")?;
-        let channel = sess.channel_direct_tcpip("127.0.0.1", 9007, None)?;
-        let writer_box = Box::new(channel.clone());
-        let reader_box = Box::new(channel);
+        let channel = sess.channel_direct_tcpip("0", 9007, None)?;
 
-        Ok(ChannelContext {
-            writer: BufWriter::new(writer_box),
-            reader: BufReader::new(reader_box)
+        Ok(Self {
+            writer: BufWriter::new(Box::new(channel.clone())),
+            reader: BufReader::new(Box::new(channel))
         })
     }
 
@@ -43,36 +39,41 @@ impl ChannelContext {
         let mut line: String = String::new();
         let regex = Regex::new(r"^N=(\d+) C=(\d+)")?;
 
-        while let Ok(_) = self.reader.read_line(&mut line) && 
-            !regex.is_match(&line) 
+        while let Ok(num) = self.reader.read_line(&mut line) && 
+            !regex.is_match(&line) &&
+            num != 0
         {
             print!("{line}");
             line.clear();
         }
 
-        let caps = regex.captures(&line).expect("unmatched");
-
-        Ok((caps[1].parse::<i32>()?, caps[2].parse::<i32>()?))
+        let captures = regex.captures(&line);
+        match captures {
+            Some(result) => Ok((result[1].parse::<i32>()?, result[2].parse::<i32>()?)),
+            _ => panic!("{}", format!("Unmatched Error: {line}"))
+        }
     }
 
     fn find_total(&mut self, start: i32, mid: i32) -> anyhow::Result<i32> {
-        let ivec: Vec<String> = (start..(mid + 1)).map(|n| n.to_string()).collect();
-        let ivec_to_string = ivec.join(" ") + "\n";
+        let ivec = (start..(mid + 1)).map(|n| n.to_string()).collect::<Vec<String>>();
+        let ivec_joined = ivec.join(" ") + "\n";
 
-        self.writer.write(ivec_to_string.as_bytes())?;
+        self.writer.write(ivec_joined.as_bytes())?;
         self.writer.flush()?;
 
         let mut line = String::new();
         let regex = Regex::new(r"^(\d+)")?;
 
         self.reader.read_line(&mut line)?;
-        let total_value = &regex.captures(&line).expect("unmatched")[1];
-
-        Ok(total_value.parse::<i32>()?)
+        let captures = &regex.captures(&line);
+        match captures {
+            Some(result) => Ok(result[1].parse::<i32>()?),
+            _ => panic!("{}", format!("Unmatched Error: {line}"))
+        }
     }
 
     fn write_result(&mut self, start: i32) -> anyhow::Result<()> {
-        self.writer.write(format!{"{start}\n"}.as_bytes())?;
+        self.writer.write(format!("{start}\n").as_bytes())?;
         self.writer.flush()?;
 
         Ok(())
@@ -141,6 +142,6 @@ mod tests {
     #[test]
     #[should_panic]
     fn direct_speed() {
-        ChannelContext::direct_channel().unwrap();
+        ChannelContext::direct_channel(60).unwrap();
     }
 }
