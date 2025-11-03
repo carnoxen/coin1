@@ -50,7 +50,7 @@ impl ChannelContext {
         let captures = regex.captures(&line);
         match captures {
             Some(result) => Ok((result[1].parse::<i32>()?, result[2].parse::<i32>()?)),
-            _ => panic!("{}", format!("Unmatched Error: {line}"))
+            _ => panic!("Unmatched finding nc: {line}")
         }
     }
 
@@ -68,7 +68,7 @@ impl ChannelContext {
         let captures = &regex.captures(&line);
         match captures {
             Some(result) => Ok(result[1].parse::<i32>()?),
-            _ => panic!("{}", format!("Unmatched Error: {line}"))
+            _ => panic!("Unmatched finding total: {line}")
         }
     }
 
@@ -127,7 +127,7 @@ fn main() -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use std::time::{ Instant };
+    use std::time::Instant;
     
     #[test]
     fn tunneling_speed() -> anyhow::Result<()> {
