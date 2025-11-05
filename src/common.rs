@@ -1,3 +1,4 @@
+use std::fmt::{Display};
 use std::net::TcpStream;
 use std::io::{ BufReader, BufWriter, prelude::* };
 use ssh2::{Session, Channel};
@@ -30,7 +31,7 @@ impl ChannelBuffer {
         })
     }
 
-    pub fn write_result(&mut self, result: String) -> anyhow::Result<()> {
+    pub fn write_result(&mut self, result: &(impl Display + ?Sized)) -> anyhow::Result<()> {
         self.writer.write(format!("{result}\n").as_bytes())?;
         self.writer.flush()?;
 

@@ -1,23 +1,23 @@
+use std::sync::LazyLock;
+
 use crate::common::*;
 use regex::Regex;
 
 fn find_nc(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<(i32, i32)> {
     let mut line: String = String::new();
-    let regex = Regex::new(r"^N=(\d+) C=(\d+)")?;
+    static REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^N=(\d+) C=(\d+)").unwrap());
 
     while let Ok(num) = channel_buffer.read_line(&mut line)
-        && !regex.is_match(&line)
+        && !REGEX.is_match(&line)
         && num != 0
     {
         print!("{line}");
         line.clear();
     }
 
-    let captures = regex.captures(&line);
-    match captures {
-        Some(result) => Ok((result[1].parse::<i32>()?, result[2].parse::<i32>()?)),
-        _ => panic!("Unmatched finding nc"),
-    }
+    let captures = REGEX.captures(&line)
+        .expect("Unmatched finding nc");
+    Ok((captures[1].parse()?, captures[2].parse()?))
 }
 
 fn find_total(channel_buffer: &mut ChannelBuffer, start: i32, mid: i32) -> anyhow::Result<i32> {
@@ -25,17 +25,13 @@ fn find_total(channel_buffer: &mut ChannelBuffer, start: i32, mid: i32) -> anyho
         .map(|n| n.to_string())
         .collect::<Vec<String>>();
     let ivec_joined = ivec.join(" ");
-    channel_buffer.write_result(ivec_joined)?;
+    channel_buffer.write_result(&ivec_joined)?;
 
     let mut line = String::new();
     channel_buffer.read_line(&mut line)?;
+    line = line.trim().to_string();
 
-    let regex = Regex::new(r"^(\d+)")?;
-    let captures = &regex.captures(&line);
-    match captures {
-        Some(result) => Ok(result[1].parse::<i32>()?),
-        _ => panic!("Unmatched finding total"),
-    }
+    Ok(line.parse::<i32>()?)
 }
 
 fn print_to_end(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<()> {
@@ -66,7 +62,7 @@ fn start_coin1(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<()> {
         }
 
         let result_string = start.to_string();
-        channel_buffer.write_result(result_string)?;
+        channel_buffer.write_result(&result_string)?;
     }
 
     print_to_end(channel_buffer)?;
@@ -97,10 +93,7 @@ mod tests {
     #[test]
     fn tunnelling_speed() -> anyhow::Result<()> {
         let start = Instant::now();
-        let account = "coin1";
-        let command = "nc 0 9007";
-        let mut channel_buffer = ChannelBuffer::tunnelled(account, command)?;
-        start_coin1(&mut channel_buffer)?;
+        Coin1::run()?;
 
         println!("Elapsed Seconds: {}", start.elapsed().as_secs());
         Ok(())
