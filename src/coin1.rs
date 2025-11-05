@@ -61,6 +61,9 @@ fn start_coin1(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<()> {
             }
         }
 
+        if n == 1 {
+            start = 1;
+        }
         let result_string = start.to_string();
         channel_buffer.write_result(&result_string)?;
     }
