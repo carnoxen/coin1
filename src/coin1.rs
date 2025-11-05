@@ -23,15 +23,13 @@ fn find_nc(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<(i32, i32)> {
 fn find_total(channel_buffer: &mut ChannelBuffer, start: i32, mid: i32) -> anyhow::Result<i32> {
     let ivec = (start..(mid + 1))
         .map(|n| n.to_string())
-        .collect::<Vec<String>>();
-    let ivec_joined = ivec.join(" ");
-    channel_buffer.write_result(&ivec_joined)?;
+        .collect::<Vec<String>>().join(" ");
+    channel_buffer.write_result(&ivec)?;
 
     let mut line = String::new();
     channel_buffer.read_line(&mut line)?;
-    line = line.trim().to_string();
 
-    Ok(line.parse::<i32>()?)
+    Ok(line.trim().parse::<i32>()?)
 }
 
 fn print_to_end(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<()> {
@@ -61,9 +59,6 @@ fn start_coin1(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<()> {
             }
         }
 
-        if n == 1 {
-            start = 1;
-        }
         let result_string = start.to_string();
         channel_buffer.write_result(&result_string)?;
     }
