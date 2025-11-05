@@ -7,14 +7,10 @@ fn find_nc(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<(i32, i32)> {
     let mut line: String = String::new();
     static REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^N=(\d+) C=(\d+)").unwrap());
 
-    while let Ok(num) = channel_buffer.read_line(&mut line)
-        && !REGEX.is_match(&line)
-        && num != 0
-    {
-        print!("{line}");
-        line.clear();
-    }
+    channel_buffer.read_line(&mut line)?;
+    line.clear();
 
+    channel_buffer.read_line(&mut line)?;
     let captures = REGEX.captures(&line)
         .expect("Unmatched finding nc");
     Ok((captures[1].parse()?, captures[2].parse()?))
