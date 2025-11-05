@@ -1,0 +1,10 @@
+[package]
+name = "coin1"
+version = "1.0.0"
+edition = "2024"
+
+[dependencies]
+common = { path = "../../common" }
+ssh2.workspace = true
+anyhow.workspace = true
+regex = "1.12.2"

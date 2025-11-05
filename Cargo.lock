@@ -44,7 +44,25 @@ name = "coin1"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "common",
  "regex",
+ "ssh2",
+]
+
+[[package]]
+name = "common"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "ssh2",
+]
+
+[[package]]
+name = "fd"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "common",
  "ssh2",
 ]
 

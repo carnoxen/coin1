@@ -1,6 +1,6 @@
 use std::sync::LazyLock;
 
-use crate::common::*;
+use common::*;
 use regex::Regex;
 
 fn find_nc(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<(i32, i32)> {
@@ -68,32 +68,11 @@ fn start_coin1(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub struct Coin1;
+fn main() -> anyhow::Result<()> {
+    let account = "coin1";
+    let command = "nc 0 9007";
+    let mut channel_buffer = ChannelBuffer::tunnelled(account, command)?;
+    start_coin1(&mut channel_buffer)?;
 
-impl Run for Coin1 {
-    fn run() -> anyhow::Result<()> {
-        println!("== COIN1 START!");
-
-        let account = "coin1";
-        let command = "nc 0 9007";
-        let mut channel_buffer = ChannelBuffer::tunnelled(account, command)?;
-        start_coin1(&mut channel_buffer)?;
-
-        Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::coin1::*;
-    use std::time::Instant;
-
-    #[test]
-    fn tunnelling_speed() -> anyhow::Result<()> {
-        let start = Instant::now();
-        Coin1::run()?;
-
-        println!("Elapsed Seconds: {}", start.elapsed().as_secs());
-        Ok(())
-    }
+    Ok(())
 }

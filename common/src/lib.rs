@@ -1,8 +1,7 @@
-use std::fmt::{Display};
+use ssh2::{Channel, Session};
+use std::fmt::Display;
+use std::io::{prelude::*, BufReader, BufWriter};
 use std::net::TcpStream;
-use std::io::{ BufReader, BufWriter, prelude::* };
-use ssh2::{Session, Channel};
-
 
 pub struct ChannelBuffer {
     writer: BufWriter<Box<dyn Write>>,
@@ -27,7 +26,7 @@ impl ChannelBuffer {
 
         Ok(Self {
             writer: BufWriter::new(Box::new(channel.clone())),
-            reader: BufReader::new(Box::new(channel))
+            reader: BufReader::new(Box::new(channel)),
         })
     }
 
@@ -41,8 +40,4 @@ impl ChannelBuffer {
     pub fn read_line(&mut self, line: &mut String) -> anyhow::Result<usize> {
         Ok(self.reader.read_line(line)?)
     }
-}
-
-pub trait Run {
-    fn run() -> anyhow::Result<()>;
 }

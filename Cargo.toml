@@ -1,12 +1,7 @@
-[package]
-name = "coin1"
-version = "1.0.0"
-authors = ["carnoxen <carnoxen@gmail.com>"]
-edition = "2024"
+[workspace]
+resolver = "3"
+members = ["common", "solutions/*"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-regex = "1.12.2"
+[workspace.dependencies]
 ssh2 = "0.9.5"
 anyhow = "1.0.100"
