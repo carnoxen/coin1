@@ -27,7 +27,8 @@ impl ChannelContext {
         sess.set_tcp_stream(tcp);
         sess.handshake()?;
         sess.userauth_password("coin1", "guest")?;
-        let channel = sess.channel_direct_tcpip("0", 9007, None)?;
+        let mut channel = sess.channel_session()?;
+        channel.exec("nc 0 9007")?;
 
         Ok(Self {
             writer: BufWriter::new(Box::new(channel.clone())),
@@ -50,7 +51,7 @@ impl ChannelContext {
         let captures = regex.captures(&line);
         match captures {
             Some(result) => Ok((result[1].parse::<i32>()?, result[2].parse::<i32>()?)),
-            _ => panic!("Unmatched finding nc: {line}")
+            _ => panic!("Unmatched finding nc")
         }
     }
 
@@ -68,7 +69,7 @@ impl ChannelContext {
         let captures = &regex.captures(&line);
         match captures {
             Some(result) => Ok(result[1].parse::<i32>()?),
-            _ => panic!("Unmatched finding total: {line}")
+            _ => panic!("Unmatched finding total")
         }
     }
 
@@ -81,8 +82,10 @@ impl ChannelContext {
 
     fn print_to_end(&mut self) -> anyhow::Result<()> {
         let mut line = String::new();
+        let regex = Regex::new("expired")?;
 
         while let Ok(num) = self.reader.read_line(&mut line) &&
+            !regex.is_match(&line) &&
             num != 0 
         {
             print!("{line}");
