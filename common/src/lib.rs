@@ -20,8 +20,9 @@ impl ChannelBuffer {
         Ok(channel)
     }
 
-    pub fn tunnelled(account: &str, command: &str) -> anyhow::Result<Self> {
-        let mut channel = Self::new_channel(account)?;
+    pub fn tunnelled(command: &str) -> anyhow::Result<Self> {
+        let current_dir = std::env::var("CARGO_PKG_NAME")?;
+        let mut channel = Self::new_channel(current_dir.as_str())?;
         channel.exec(command)?;
 
         Ok(Self {
@@ -31,7 +32,8 @@ impl ChannelBuffer {
     }
 
     pub fn write_result(&mut self, result: &(impl Display + ?Sized)) -> anyhow::Result<()> {
-        self.writer.write(format!("{result}\n").as_bytes())?;
+        let formatted = format!("{result}\n");
+        self.writer.write(formatted.as_bytes())?;
         self.writer.flush()?;
 
         Ok(())

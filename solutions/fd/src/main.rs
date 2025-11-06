@@ -13,9 +13,8 @@ fn start_fd(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<()> {
 }
 
 fn main() -> anyhow::Result<()> {
-    let account = "fd";
     let command = "./fd 4660";
-    let mut channel_buffer = ChannelBuffer::tunnelled(account, command)?;
+    let mut channel_buffer = ChannelBuffer::tunnelled(command)?;
     start_fd(&mut channel_buffer)?;
 
     Ok(())

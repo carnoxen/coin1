@@ -69,9 +69,8 @@ fn start_coin1(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<()> {
 }
 
 fn main() -> anyhow::Result<()> {
-    let account = "coin1";
     let command = "nc 0 9007";
-    let mut channel_buffer = ChannelBuffer::tunnelled(account, command)?;
+    let mut channel_buffer = ChannelBuffer::tunnelled(command)?;
     start_coin1(&mut channel_buffer)?;
 
     Ok(())
