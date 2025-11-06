@@ -4,7 +4,5 @@ version = "1.0.0"
 edition = "2024"
 
 [dependencies]
-common = { path = "../../common" }
-ssh2.workspace = true
-anyhow.workspace = true
+pwnable_kr = { path = "../" }
 regex = "1.12.2"

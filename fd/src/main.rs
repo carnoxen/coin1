@@ -1,4 +1,4 @@
-use common::*;
+use pwnable_kr::*;
 
 pub struct Fd;
 

@@ -43,27 +43,15 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 name = "coin1"
 version = "1.0.0"
 dependencies = [
- "anyhow",
- "common",
+ "pwnable_kr",
  "regex",
- "ssh2",
-]
-
-[[package]]
-name = "common"
-version = "1.0.0"
-dependencies = [
- "anyhow",
- "ssh2",
 ]
 
 [[package]]
 name = "fd"
 version = "1.0.0"
 dependencies = [
- "anyhow",
- "common",
- "ssh2",
+ "pwnable_kr",
 ]
 
 [[package]]
@@ -159,6 +147,14 @@ name = "pkg-config"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
+
+[[package]]
+name = "pwnable_kr"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "ssh2",
+]
 
 [[package]]
 name = "redox_syscall"

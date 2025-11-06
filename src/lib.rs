@@ -3,6 +3,8 @@ use std::fmt::Display;
 use std::io::{prelude::*, BufReader, BufWriter};
 use std::net::TcpStream;
 
+pub use anyhow;
+
 pub struct ChannelBuffer {
     writer: BufWriter<Box<dyn Write>>,
     reader: BufReader<Box<dyn Read>>,

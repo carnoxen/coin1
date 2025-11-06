@@ -1,6 +1,6 @@
 use std::sync::LazyLock;
 
-use common::*;
+use pwnable_kr::*;
 use regex::Regex;
 
 fn find_nc(channel_buffer: &mut ChannelBuffer) -> anyhow::Result<(i32, i32)> {
